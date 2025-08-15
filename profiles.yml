@@ -1,0 +1,11 @@
+# located at ~/.dbt/profiles.yml
+dbt_project:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: '/Users/pranithapadala/Desktop/Ecommerce_project/dbt_project/ecommerce.duckdb'
+      settings:
+        s3_region: 'us-east-1' 
+        s3_access_key_id: 'AKIARZDBH5T34H3GFQFV'
+        s3_secret_access_key: '96RXCHL6RFlqtjTWRVSf/tqwF/Vec7KUUlSKB9t'

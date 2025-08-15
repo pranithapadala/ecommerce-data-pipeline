@@ -1,0 +1,12 @@
+# models/staging/source.yml
+version: 2
+
+sources:
+  - name: raw_data_source
+    tables:
+      - name: raw_events
+        external:
+          location: "s3://pranitha-ecom-data/raw-data/events.csv"
+          format: csv
+          options:
+            header: true

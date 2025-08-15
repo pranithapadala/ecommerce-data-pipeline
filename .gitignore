@@ -1,0 +1,22 @@
+# .gitignore
+
+# dbt generated folders
+dbt_project/dbt_packages/
+dbt_project/logs/
+dbt_project/target/
+
+# DuckDB database file and related temp files
+dbt_project/ecommerce.duckdb
+dbt_project/ecommerce.duckdb.wal
+
+# Python virtual environment and cache
+venv/
+__pycache__/
+*.pyc
+
+# IDE-specific folders
+.vscode/
+.idea/
+
+# Mac-specific system files
+.DS_Store
