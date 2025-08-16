@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Analytics Dashboard</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #4a4a4a;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .main-heading {
+            text-align: center;
+            font-size: 3em;
+            font-weight: 700;
+            color:rgb(97, 103, 104);
+            margin-bottom: 30px;
+        }
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 50px 25px 25px 25px;
+            position: relative;
+        }
+        .chart-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #555;
+        }
+        canvas {
+            height: 300px;
+        }
+        #transactionsOverTimeChart {
+            height: 450px !important;
+        }
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <h1 class="main-heading">E-commerce Analytics Dashboard</h1>
+
+    <div class="dashboard-container">
+        <div class="chart-card full-width">
+            <span class="chart-title">Transactions Per Day</span>
+            <canvas id="transactionsOverTimeChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <span class="chart-title">Top 10 Most Active Users</span>
+            <canvas id="topUsersChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <span class="chart-title">Transactions by Day of the Week</span>
+            <canvas id="transactionsByDowChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cacheBuster = `?v=${new Date().getTime()}`;
+
+            fetch(`/api/transactions-over-time${cacheBuster}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('transactionsOverTimeChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.data,
+                                borderColor: '#36a2eb',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#36a2eb',
+                                pointBorderColor: '#fff',
+                                pointRadius: 4,
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: false }, 
+                                tooltip: { mode: 'index', intersect: false }
+                            },
+                            interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                            scales: {
+                                y: { beginAtZero: true, grid: { display: false } },
+                                x: { 
+                                    type: 'time',
+                                    time: { unit: 'week', tooltipFormat: 'yyyy-MM-dd' },
+                                    ticks: { maxRotation: 45, minRotation: 45 },
+                                    grid: { display: false }
+                                }
+                            }
+                        },
+                        plugins: [{
+                            id: 'crosshairLine',
+                            afterDatasetsDraw(chart) {
+                                if (chart.tooltip?._active?.length) {
+                                    const ctx = chart.ctx;
+                                    const x = chart.tooltip._active[0].element.x;
+                                    const topY = chart.chartArea.top;
+                                    const bottomY = chart.chartArea.bottom;
+                                    ctx.save();
+                                    ctx.beginPath();
+                                    ctx.moveTo(x, topY);
+                                    ctx.lineTo(x, bottomY);
+                                    ctx.lineWidth = 1;
+                                    ctx.strokeStyle = '#aaa';
+                                    ctx.setLineDash([5, 5]);
+                                    ctx.stroke();
+                                    ctx.restore();
+                                }
+                            }
+                        }]
+                    });
+                });
+
+            fetch(`/api/top-users${cacheBuster}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('topUsersChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.data,
+                                backgroundColor: '#2ecc71'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, grid: { display: false } },
+                                x: { ticks: { maxRotation: 45, minRotation: 45 }, grid: { display: false } }
+                            }
+                        }
+                    });
+                });
+
+            fetch(`/api/transactions-by-dow${cacheBuster}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('transactionsByDowChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.data,
+                                backgroundColor: [
+                                    '#e74c3c', '#3498db', '#9b59b6', '#f1c40f',
+                                    '#2ecc71', '#1abc9c', '#e67e22'
+                                ],
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '60%',
+                            plugins: {
+                                legend: { 
+                                    position: 'bottom', 
+                                    labels: { boxWidth: 12, font: { size: 12 } } 
+                                }
+                            }
+                        }
+                    });
+                });
+        });
+    </script>
+</body>
+</html>
